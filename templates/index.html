@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Random Actor with Color</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="actor" style="color: {{ color | safe }}">{{ actor }}</h1>
+    <button id="changeButton">Change Actor</button>
+    <script>
+        document.getElementById("changeButton").addEventListener("click", function() {
+            // Make an AJAX request to the Flask server to get a new actor's name and color
+            fetch('/get_random_actor')
+                .then(response => response.json())
+                .then(data => {
+                    // Update the 'actor' element with the new actor's name
+                    document.getElementById("actor").textContent = data.actor;
+                    // Update the text color of 'actor'
+                    document.getElementById("actor").style.color = data.color;
+                })
+                .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>
