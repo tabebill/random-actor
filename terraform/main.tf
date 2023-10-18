@@ -2,12 +2,12 @@
 terraform {
     required_providers{
         aws = {
-            source = "hashicorp/aws"
-            version = "~>4.0"
+            source = "integrations/github"
+            version = "~>4.8.0"
         }
     }
     backend "s3"{
-        bucket = "my-terraform-state-bucket"
+        bucket = "my-terraform-state-bucket-dchg4357"
         key = "aws/ec2-deploy/terraform.tfstate"
     }
 }
@@ -19,7 +19,7 @@ provider "aws" {
 
 # S3 bucket for remote backend
 resource "aws_s3_bucket" "terraform_state_bucket" {
-    bucket = "my-terraform-state-bucket"
+    bucket = "my-terraform-state-bucket-dchg4357"
     acl    = "private"
 }
 
@@ -504,7 +504,7 @@ output "codepipeline_name" {
 }
 
 data "github_actions_secret" "oauth_token" {
-  secret_name = "github_oauth_token"
+  secret_name = "oauth_token"
 }
 
 # Now you can use the token as needed
