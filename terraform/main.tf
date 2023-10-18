@@ -224,10 +224,10 @@ resource "aws_beanstalk_environment" "my_beanstalk_env" {
 }
 
 # Create a CodeBuild project for building the Docker image
-resource "aws_codebuild_project" "build_project" {
+resource "aws_codebuild_project" "build_project_1" {
     name          = "docker-build-project"
     description   = "Build Docker image from GitHub"
-    service_role  = aws_iam_role.codebuild_role.arn
+    service_role  = aws_iam_role.codebuild_role_1.arn
     artifacts {
         type = "NO_ARTIFACTS"
     }
@@ -261,7 +261,7 @@ output "docker_image_name" {
 }
 
 # IAM role for CodeBuild
-resource "aws_iam_role" "codebuild_role" {
+resource "aws_iam_role" "codebuild_role_1" {
     name = "codebuild-role"
 
     assume_role_policy = jsonencode({
@@ -279,7 +279,7 @@ resource "aws_iam_role" "codebuild_role" {
 }
 
 # IAM policy for the CodeBuild role
-resource "aws_iam_policy" "codebuild_policy" {
+resource "aws_iam_policy" "codebuild_policy_1" {
     name        = "codebuild-policy"
     description = "IAM policy for CodeBuild project"
 
@@ -307,21 +307,21 @@ resource "aws_iam_policy" "codebuild_policy" {
 
 # Attach the IAM policy to the CodeBuild role
 resource "aws_iam_role_policy_attachment" "codebuild_role_policy_attachment" {
-    policy_arn = aws_iam_policy.codebuild_policy.arn
-    role       = aws_iam_role.codebuild_role.name
+    policy_arn = aws_iam_policy.codebuild_policy_1.arn
+    role       = aws_iam_role.codebuild_role_1.name
 }
 
 # Create an AWS CodeDeploy application
-resource "aws_codedeploy_app" "example" {
+resource "aws_codedeploy_app" "example1" {
     name     = "MyCodeDeployApp"
     compute_platform = "ECS"
 }
 
 # Create a CodeDeploy Deployment Group for Elastic Beanstalk
-resource "aws_codedeploy_deployment_group" "example" {
-    app_name              = aws_codedeploy_app.example.name
+resource "aws_codedeploy_deployment_group" "example1" {
+    app_name              = aws_codedeploy_app.example1.name
     deployment_group_name = "MyDeploymentGroup"
-    service_role_arn      = [aws_iam_role.codedeploy_role.arn]
+    service_role_arn      = [aws_iam_role.codedeploy_role_1.arn]
 
     deployment_config {
         name = "CodeDeployDefault.ElasticBeanstalk.AllAtOnce"
@@ -347,7 +347,7 @@ resource "aws_codedeploy_deployment_group" "example" {
 }
 
 # Create CodeDeploy role
-resource "aws_iam_role" "codedeploy_role" {
+resource "aws_iam_role" "codedeploy_role_1" {
   name = "CodeDeployRole"
 
   assume_role_policy = jsonencode({
@@ -368,13 +368,13 @@ resource "aws_iam_role" "codedeploy_role" {
 
 # Attach CodeDeploy role to deployment group
 resource "aws_iam_role_policy_attachment" "codedeploy_policy" {
-  role = aws_iam_role.codedeploy_role.name
+  role = aws_iam_role.codedeploy_role_1.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
 
 # Output the CodeDeploy Deployment Group name
 output "codedeploy_deployment_group_name" {
-  value = aws_codedeploy_deployment_group.example.deployment_group_name
+  value = aws_codedeploy_deployment_group.example1.deployment_group_name
 }
 
 
@@ -390,6 +390,163 @@ resource "aws_codepipeline_action" "manual_approval" {
     configuration = {
         Name = "Manual Approval"
     }
+}
+
+# CodeBuild project for EC2
+resource "aws_codebuild_project" "build_project_2" {
+    name          = "my-codebuild"
+    description   = "Build Docker image and push to ECR"
+    service_role  = aws_iam_role.codebuild_role_2.arn
+    environment {
+        compute_type = "BUILD_GENERAL1_SMALL"
+        image        = "aws/codebuild/standard:5.0"
+    }
+    artifacts {
+        type = "CODEPIPELINE"
+    }
+    source {
+        type = "CODEPIPELINE"
+    }
+    phases {
+        build {
+        commands = [
+            "echo Build started on `date`",
+            "docker build -t ${var.docker_image_name}:latest .",
+            "docker tag ${var.docker_image_name}:latest ${var.ecr_repository_url}:latest",
+            "aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${var.ecr_repository_url}",
+            "docker push ${var.ecr_repository_url}:latest",
+        ]
+        }
+    }
+}
+
+# IAM Role for AWS CodeBuild
+resource "aws_iam_role" "codebuild_role_2" {
+    name = "codebuild-role"
+
+    assume_role_policy = jsonencode({
+        Version = "2012-10-17",
+        Statement = [
+        {
+            Action = "sts:AssumeRole",
+            Effect = "Allow",
+            Principal = {
+            Service = "codebuild.amazonaws.com",
+            },
+        },
+        ],
+    })
+}
+
+# IAM Policy for AWS CodeBuild (ECR and S3 access)
+resource "aws_iam_policy" "codebuild_policy_2" {
+    name = "codebuild-policy"
+
+    description = "Allows AWS CodeBuild to access ECR and S3"
+
+    policy = jsonencode({
+        Version = "2012-10-17",
+        Statement = [
+        {
+            Action = [
+            "ecr:GetDownloadUrlForLayer",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:GetAuthorizationToken",
+            "ecr:GetRepositoryPolicy",
+            "ecr:DescribeRepositories",
+            "ecr:GetRepositoryPolicy",
+            "ecr:ListImages",
+            "ecr:DescribeImages",
+            "ecr:BatchGetImage",
+            ],
+            Effect = "Allow",
+            Resource = "*",
+        },
+        {
+            Action = [
+            "s3:GetObject",
+            "s3:GetObjectVersion",
+            "s3:PutObject",
+            "s3:ListBucket",
+            ],
+            Effect = "Allow",
+            Resource = ["arn:aws:s3:::your-s3-bucket/*"],
+        },
+        ],
+    })
+}
+
+# Attach the CodeBuild policy to the CodeBuild role
+resource "aws_iam_role_policy_attachment" "codebuild_policy_attachment" {
+  policy_arn = aws_iam_policy.codebuild_policy_2.arn
+  role       = aws_iam_role.codebuild_role_2.name
+}
+
+# IAM Role for AWS CodeDeploy
+resource "aws_iam_role" "codedeploy_role_2" {
+    name = "codedeploy-role"
+
+    assume_role_policy = jsonencode({
+        Version = "2012-10-17",
+        Statement = [
+        {
+            Action = "sts:AssumeRole",
+            Effect = "Allow",
+            Principal = {
+            Service = "codedeploy.amazonaws.com",
+            },
+        },
+        ],
+    })
+}
+
+# IAM Policy for AWS CodeDeploy (EC2 and S3 access)
+resource "aws_iam_policy" "codedeploy_policy_2" {
+    name = "codedeploy-policy"
+
+    description = "Allows AWS CodeDeploy to access EC2 and S3"
+
+    policy = jsonencode({
+        Version = "2012-10-17",
+        Statement = [
+        {
+            Action = [
+            "ec2:DescribeInstances",
+            "ec2:RegisterInstancesWithLoadBalancer",
+            "ec2:DeregisterInstancesFromLoadBalancer",
+            "ec2:CreateTags",
+            ],
+            Effect = "Allow",
+            Resource = "*",
+        },
+        {
+            Action = [
+            "s3:GetObject",
+            "s3:GetObjectVersion",
+            ],
+            Effect = "Allow",
+            Resource = ["arn:aws:s3:::your-s3-bucket/*"],
+        },
+        ],
+    })
+}
+
+# Attach the CodeDeploy policy to the CodeDeploy role
+resource "aws_iam_role_policy_attachment" "codedeploy_policy_attachment" {
+    policy_arn = aws_iam_policy.codedeploy_policy_2.arn
+    role       = aws_iam_role.codedeploy_role.name
+}
+
+resource "aws_codedeploy_application" "example2" {
+  name            = "my-codedeploy-app"
+  compute_platform = "Server"  # Specify "Server" for EC2 deployments
+}
+
+resource "aws_codedeploy_deployment_group" "my_codedeploy_group" {
+  name                 = "my-codedeploy-group"
+  service_name         = "ec2"
+  deployment_config_name = "CodeDeployDefault.EC2/AllAtOnce"
+  application_name      = aws_codedeploy_application.example2.name
 }
 
 # Create a CodePipeline
@@ -431,7 +588,7 @@ resource "aws_codepipeline" "example" {
             input_artifacts  = ["source_output"]
             output_artifacts = ["build_output"]
             configuration {
-                ProjectName = aws_codebuild_project.build_project.name
+                ProjectName = aws_codebuild_project.build_project_1.name
             }
         }
     }
@@ -469,9 +626,52 @@ resource "aws_codepipeline" "example" {
     }
 
     stage {
-        
+        name = "Source"
+        action {
+            name            = "SourceAction"
+            category        = "Source"
+            owner           = "AWS"
+            provider        = "ECR"  # Use "ECR" as the source provider
+            version         = "1"
+            output_artifacts = ["source_output"]
+
+            configuration = {
+                RepositoryName = var.ecr_repository_name
+            }
+        }
     }
 
+    stage {
+        name = "Build"
+        action {
+            name            = "BuildAction"
+            category        = "Build"
+            owner           = "AWS"
+            provider        = "CodeBuild"
+            input_artifacts = ["source_output"]
+            output_artifacts = ["build_output"]
+
+            configuration = {
+                ProjectName = aws_codebuild_project.my_codebuild.name
+            }
+        }
+    }
+
+    stage {
+        name = "Deploy"
+        action {
+            name            = "DeployAction"
+            category        = "Deploy"
+            owner           = "AWS"
+            provider        = "CodeDeploy"
+            input_artifacts = ["build_output"]
+
+            configuration = {
+                ApplicationName          = aws_codedeploy_application.my_codedeploy_app.name
+                DeploymentGroupName      = aws_codedeploy_deployment_group.my_codedeploy_group.name
+            }
+        }
+    }
 }
 
 # IAM role for the CodePipeline
