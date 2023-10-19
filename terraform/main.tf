@@ -537,12 +537,14 @@ resource "aws_iam_role_policy_attachment" "codedeploy_policy_attachment" {
     role       = aws_iam_role.codedeploy_role.name
 }
 
+# Second CodeDeploy App
 resource "aws_codedeploy_application" "example2" {
   name            = "my-codedeploy-app"
   compute_platform = "Server"  # Specify "Server" for EC2 deployments
 }
 
-resource "aws_codedeploy_deployment_group" "my_codedeploy_group" {
+# Second CodeDeploy Deployment Group
+resource "aws_codedeploy_deployment_group" "example2" {
   name                 = "my-codedeploy-group"
   service_name         = "ec2"
   deployment_config_name = "CodeDeployDefault.EC2/AllAtOnce"
@@ -652,7 +654,7 @@ resource "aws_codepipeline" "example" {
             output_artifacts = ["build_output"]
 
             configuration = {
-                ProjectName = aws_codebuild_project.my_codebuild.name
+                ProjectName = aws_codebuild_project.build_project_2.name
             }
         }
     }
@@ -667,8 +669,8 @@ resource "aws_codepipeline" "example" {
             input_artifacts = ["build_output"]
 
             configuration = {
-                ApplicationName          = aws_codedeploy_application.my_codedeploy_app.name
-                DeploymentGroupName      = aws_codedeploy_deployment_group.my_codedeploy_group.name
+                ApplicationName          = aws_codedeploy_application.example2.name
+                DeploymentGroupName      = aws_codedeploy_deployment_group.example2.name
             }
         }
     }
