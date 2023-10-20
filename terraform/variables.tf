@@ -22,6 +22,12 @@ variable "ecr_repository_name" {
   default = "my-docker-repo"
 }
 
+# Define Docker image name
+variable "docker_image_name" {
+    type  = string
+    default= "random-actor"
+}
+
 # Define the CodePipeline artifact bucket name
 variable "artifact_bucket_name" {
   type    = string
