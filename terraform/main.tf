@@ -19,13 +19,13 @@ provider "aws" {
 
 # S3 bucket for remote backend
 resource "aws_s3_bucket" "terraform_state_bucket" {
-    bucket = "my-terraform-state-bucket-dchg4357"
+    bucket = "my-terraform-state-bucket-dchg4357" #create a bucket in the console before inputting the name here
     acl    = "private"
 }
 
 # S3 bucket for artifact storage
 resource "aws_s3_bucket" "codepipeline_artifact_bucket" {
-  bucket = "my-codepipeline-artifacts"
+  bucket = "my-codepipeline-artifacts-dc24koyh4" #make sure the bucket name here is unique
 }
 
 # VPC (Virtual Private Cloud)
