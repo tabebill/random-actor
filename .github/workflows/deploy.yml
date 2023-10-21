@@ -37,15 +37,11 @@ jobs:
       working-directory: ./terraform  # Assumes Terraform configuration is in the /terraform directory
 
     - name: Plan Changes
-      run: terraform plan -out=tfplan 
+      run: terraform plan
       working-directory: ./terraform
 
     - name: Apply Changes
-      run: terraform apply -auto-approve tfplan
-
-    - name: Destroy Resources (Optional)
-      run: terraform destroy -auto-approve 
-      working-directory: ./terraform
+      run: terraform apply -auto-approve
 
     - name: Login to ECR
       run: aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login -u AWS --password-stdin ${{ secrets.ECR_REPO_URI }}
