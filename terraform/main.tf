@@ -573,8 +573,7 @@ resource "aws_codepipeline" "example" {
             configuration {
                 Owner  = "tabebill"
                 Repo   = "random-actor"
-                Branch = "main"
-                OAuthToken = data.github_actions_secret.oauth_token.value
+                Branch = "random-actor"
             }
         }
     }
