@@ -27,6 +27,25 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 0.15.4  # Replace with your desired Terraform version
+
+    - name: Initialize Terraform
+      run: terraform init ./terraform  # Assumes Terraform configuration is in the /terraform directory
+
+    - name: Plan Changes
+      run: terraform plan -out=tfplan 
+      working-directory: ./terraform
+
+    - name: Apply Changes
+      run: terraform apply -auto-approve tfplan
+
+    - name: Destroy Resources (Optional)
+      run: terraform destroy -auto-approve 
+      working-directory: ./terraform
+
     - name: Login to ECR
       run: aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login -u AWS --password-stdin ${{ secrets.ECR_REPO_URI }}
 

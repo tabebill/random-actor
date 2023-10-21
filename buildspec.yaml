@@ -1,0 +1,27 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_REGION: $AWS_REGION
+    ECR_REPO_URI: $ECR_REPO_URI
+    GITHUB_REPO_URL: $GITHUB_REPO_URL
+    ECR_REPO_NAME: $ECR_REPO_NAME
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --no-include-email --region $AWS_REGION)
+  build:
+    commands:
+      - echo Building Docker image...
+      - docker build -t $ECR_REPO_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION .
+  post_build:
+    commands:
+      - echo Tagging Docker image...
+      - docker tag $ECR_REPO_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION $ECR_REPO_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo Pushing Docker image to ECR...
+      - docker push $ECR_REPO_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
+
+artifacts:
+  files: build.json
