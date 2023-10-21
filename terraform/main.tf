@@ -14,7 +14,7 @@ terraform {
 
 # AWS provider and region
 provider "aws" {
-    region = var.region 
+    region = var.region
 }
 
 # S3 bucket for remote backend
@@ -30,6 +30,7 @@ resource "aws_s3_bucket" "codepipeline_artifact_bucket" {
 
 # VPC (Virtual Private Cloud)
 resource "aws_vpc" "my_vpc" {
+    region = var.region
     cidr_block = "10.0.0.0/16" # Adjust the CIDR block as needed
     enable_dns_support = true
     enable_dns_hostnames = true
@@ -257,7 +258,7 @@ resource "aws_codebuild_project" "build_project_1" {
   }
 }
 output "docker_image_name" {
-  value = "${var.buildspec_environment["ECR_REPO_NAME"]}:${format("%d", timestamp())}"
+  value = "${var.ecr_repository_name}:${format("%d", timestamp())}"
 }
 
 # IAM role for CodeBuild
@@ -574,6 +575,7 @@ resource "aws_codepipeline" "example" {
                 Owner  = "tabebill"
                 Repo   = "random-actor"
                 Branch = "random-actor"
+                #OAuthToken = data.github_actions_secret.oauth_token.value
             }
         }
     }
@@ -704,13 +706,5 @@ output "codepipeline_name" {
     value = aws_codepipeline.example.name
 }
 
-data "github_actions_secret" "oauth_token" {
-  secret_name = "oauth_token"
-}
 
-# Now you can use the token as needed
-provider "github" {
-  owner   = "tabebill"
-  token   = data.github_actions_secret.oauth_token.value
-}
 
