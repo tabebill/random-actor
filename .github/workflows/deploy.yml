@@ -33,7 +33,8 @@ jobs:
         terraform_version: 0.15.4  # Replace with your desired Terraform version
 
     - name: Initialize Terraform
-      run: terraform init ./terraform  # Assumes Terraform configuration is in the /terraform directory
+      run: terraform init 
+      working-directory: ./terraform  # Assumes Terraform configuration is in the /terraform directory
 
     - name: Plan Changes
       run: terraform plan -out=tfplan 
