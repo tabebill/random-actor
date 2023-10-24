@@ -2,7 +2,7 @@
 terraform {
     required_providers{
         aws = {
-            source = "integrations/github"
+            source = "hashicorp/aws"
             version = "~>4.8.0"
         }
     }
@@ -14,7 +14,7 @@ terraform {
 
 # AWS provider and region
 provider "aws" {
-    region = var.region
+    region = var.aws_region
 }
 
 # S3 bucket for remote backend
