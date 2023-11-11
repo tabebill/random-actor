@@ -42,7 +42,7 @@ You need to have Python and pip (Python package manager) installed on your syste
 
 # Navigate to the project directory
    ```bash
-   cd random-actor-generator
+   cd random-actor
    ```
 
 # Install Python dependencies
